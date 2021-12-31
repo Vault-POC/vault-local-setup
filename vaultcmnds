@@ -1,0 +1,53 @@
+vault server --dev --dev-root-token-id="root"
+export VAULT_ADDR='http://127.0.0.1:8200'
+export VAULT_TOKEN="root"
+
+# enable approle
+vault auth enable approle
+
+# create secret path
+vault secrets enable -path=database kv-v2
+
+# database-policy.hcl
+# Read-only permission on 'database/*' path
+tee database-policy.hcl <<"EOF" 
+path "database/*" { 
+  capabilities = [ "read" ] 
+}
+EOF
+vault policy write database database-policy.hcl
+
+# database-init-token.hcl
+# policy for initial token
+tee database-init-token.hcl <<"EOF"
+path "auth/approle/*" { 
+  capabilities = [ "create", "read", "update" ] 
+}
+EOF
+vault policy write database-init-token database-init-token.hcl
+
+# write approle for pg_service_1 with policy:database and ttl:1h
+vault write auth/approle/role/pg_service_1 policies="database" token_ttl=1h
+
+#Store KV Data
+tee postgres.txt <<"EOF" 
+{ 
+  "url": "jdbc:postgresql://localhost:5432/db", 
+  "username": "postgres", 
+  "password": "password" 
+} 
+EOF
+vault kv put database/postgres/service_1 @postgres.txt
+
+# Generate init token for APP, valid for 3 days
+vault token create -policy=database-init-token -ttl=72h
+
+Result will be like this. Copy the token.
+Key                  Value
+---                  -----
+token                s.RNBovq6OJodaBoEkj2bLO0Gb
+...                  ...
+
+##before start the application, please makesure that your local postgresql server is running on localhost:5432 with the particular database(in here databse is called "db")
+
+./mvnw spring-boot:run -DTOKEN=s.RNBovq6OJodaBoEkj2bLO0Gb
