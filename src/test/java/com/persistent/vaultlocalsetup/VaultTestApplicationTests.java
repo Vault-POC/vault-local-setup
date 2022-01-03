@@ -1,4 +1,4 @@
-package com.rurocker.vaulttest;
+package com.persistent.vaultlocalsetup;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

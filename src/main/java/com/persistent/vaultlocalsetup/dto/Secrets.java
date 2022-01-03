@@ -1,4 +1,4 @@
-package com.rurocker.vaulttest.dto;
+package com.persistent.vaultlocalsetup.dto;
 
 import java.io.Serializable;
 

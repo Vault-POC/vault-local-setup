@@ -1,4 +1,4 @@
-package com.rurocker.vaulttest.config;
+package com.persistent.vaultlocalsetup.config;
 
 import java.util.Map;
 
